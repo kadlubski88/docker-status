@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# get info from the docker engine
+format="{{json .Containers}}:{{json .ContainersRunning}}:{{json .ContainersPaused}}:{{json .ContainersStopped}}:{{json .Images}}"
+IFS=":" read -ra containers <<< "$(sudo docker system info --format="$format")"
+printf '%s\n' "Containers"
+printf '%s\t%s\n' "total:  " "${containers[0]}"
+printf '%s\t%s\n' "running:" "${containers[1]}"
+printf '%s\t%s\n' "paused: " "${containers[2]}"
+printf '%s\t%s\n' "stopped:" "${containers[3]}"
+printf '\n'
+printf '%s\n' "Images"
+printf '%s\t%s\n' "total:  " "${containers[4]}"
+# echo -e ${containers[1]//'"'/''}
