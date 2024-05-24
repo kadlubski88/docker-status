@@ -1,14 +1,117 @@
 #!/usr/bin/env bash
 
-# get info from the docker engine
-format="{{json .Containers}}:{{json .ContainersRunning}}:{{json .ContainersPaused}}:{{json .ContainersStopped}}:{{json .Images}}"
-IFS=":" read -ra containers <<< "$(sudo docker system info --format="$format")"
-printf '%s\n' "Containers"
-printf '%s\t%s\n' "total:  " "${containers[0]}"
-printf '%s\t%s\n' "running:" "${containers[1]}"
-printf '%s\t%s\n' "paused: " "${containers[2]}"
-printf '%s\t%s\n' "stopped:" "${containers[3]}"
-printf '\n'
-printf '%s\n' "Images"
-printf '%s\t%s\n' "total:  " "${containers[4]}"
-# echo -e ${containers[1]//'"'/''}
+get_container_ids() {
+    # Get all container ids in a array
+    IFS=$'\n' read -d "" -ra container_ids <<< "$(sudo docker ps -aq)"
+}
+
+get_image_ids() {
+    # Get all image ids in a array
+    IFS=$'\n' read -d "" -ra image_ids <<< "$(sudo docker image ls -aq)"
+}
+
+get_container_total() {
+    # Get total number of containers
+    container_total=${#container_ids[@]}
+}
+
+get_image_total() {
+    # Get total number of images
+    image_total=${#image_ids[@]}
+}
+
+get_container_states() {
+    # format for the response of the docker inspect
+    format="{{json .State.Status}}:{{json .State.Health}}"
+
+    # iterate through all the container ids
+    for index in "${!container_ids[@]}"
+    do
+        IFS=":" read -ra container_states <<< "$(sudo docker inspect --format="$format" "${container_ids[${index}]}")"
+        case "${container_states[0]//'"'/''}" in
+            "running") ((container_running++))
+            ;;
+            "exited") ((container_exited++))
+            ;;
+            "paused") ((container_paused++))
+            ;;
+        esac
+        case "${container_states[1]//'"'/''}" in
+            "healthy") ((container_health_healthy++))
+            ;;
+            "unhealthy") ((container_health_unhealthy++))
+            ;;
+            "null") ((container_health_undefined++))
+            ;;
+        esac
+    done
+}
+
+get_image_sizes() {
+    # format for the response of the docker image inspect
+    format="{{json .Size}}"
+    for index in "${!image_ids[@]}"
+    do
+        size=$(sudo docker image inspect --format="$format" "${image_ids[${index}]}")
+        ((image_size+=${size//'"'/''}))
+    done
+}
+
+display_text() {
+    printf '\n\e[1m%s\n%s\e[0m\n' "Containers" "----------" #containers
+    printf '%s\t%s\n' "Total:   " "${container_total}"
+    printf '%s\t%s\n' "Running: " "${container_running}"
+    printf '%s\t%s\n' "   Healthy: " "   ${container_health_healthy}"
+    printf '%s\t%s\n' "   Unhealthy: " "   ${container_health_unhealthy}"
+    printf '%s\t%s\n' "   Undefined: " "   ${container_health_undefined}"
+    printf '%s\t%s\n' "Exited: " "${container_exited}"
+    printf '%s\t%s\n' "Paused: " "${container_paused}"
+    printf '\n\e[1m%s\n%s\e[0m\n' "Images" "------" #images
+    printf '%s\t%s\n' "Total:   " "${image_total}"
+    printf '%s\t%s\n' "Size:   " "$(bc <<< "scale=2; ${image_size}/1000000") MB"
+}
+
+display_json() {
+    printf "{"
+    printf '%s%s' "\"container_total\":" "${container_total},"
+    printf '%s%s' "\"container_running\":" "${container_running},"
+    printf '%s%s' "\"container_exited\":" "${container_exited},"
+    printf '%s%s' "\"container_paused\":" "${container_paused},"
+    printf '%s%s' "\"container_health_healthy\":" "${container_health_healthy},"
+    printf '%s%s' "\"container_health_unhealthy\":" "${container_health_unhealthy},"
+    printf '%s%s' "\"container_health_undefined\":" "${container_health_undefined},"
+    printf '%s%s' "\"image_total\":" "${image_total},"
+    printf '%s%s' "\"image_size\":" "${image_size}"
+    printf "}"
+}
+
+main() {
+    # initialize the variable
+    container_total=0
+    container_running=0
+    container_paused=0
+    container_exited=0
+    container_health_healthy=0
+    container_health_unhealthy=0
+    container_health_undefined=0
+    image_total=0
+    image_size=0
+    ram_total=0
+    cpu_total=0
+    # Run the functions
+    get_container_ids
+    get_container_total
+    get_container_states
+    get_image_ids
+    get_image_total
+    get_image_sizes
+
+    if [ $1 = "--json" ]
+    then
+        display_json
+    else
+        display_text
+    fi
+}
+
+main "$1"
