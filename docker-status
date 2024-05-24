@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+get_engine_version() {
+    version=$(sudo docker --version)
+}
+
 get_container_ids() {
     # Get all container ids in a array
     IFS=$'\n' read -d "" -ra container_ids <<< "$(sudo docker ps -aq)"
@@ -58,6 +62,8 @@ get_image_sizes() {
 }
 
 display_text() {
+    printf '\n\e[1m%s\n%s\e[0m\n' "Docker engine" "-------------"
+    printf '%s\t%s\n' "Version:   " "${version}"
     printf '\n\e[1m%s\n%s\e[0m\n' "Containers" "----------" #containers
     printf '%s\t%s\n' "Total:   " "${container_total}"
     printf '%s\t%s\n' "Running: " "${container_running}"
@@ -87,6 +93,7 @@ display_json() {
 
 main() {
     # initialize the variable
+    version=""
     container_total=0
     container_running=0
     container_paused=0
@@ -99,6 +106,7 @@ main() {
     ram_total=0
     cpu_total=0
     # Run the functions
+    get_engine_version
     get_container_ids
     get_container_total
     get_container_states
