@@ -4,8 +4,14 @@ A simple tool to inspect the status of your docker engine and containers as plai
 ## Usage
 docker-status [OPTIONS]
 
-## options
+## Options
 - --json <br> output as a json
+
+## Installation
+~~~
+sudo chmod +x ./install.sh
+sudo ./install.sh
+~~~
 
 ## Ouput example
 plain text:
@@ -31,5 +37,5 @@ Size:           7.79 MB
 ~~~
 json
 ~~~
-{"container_total":2,"container_running":0,"container_exited":1,"container_paused":1,"container_health_healthy":0,"container_health_unhealthy":0,"container_health_undefined":2,"image_total":1,"image_size":7794716}
+{"container_total":4,"container_running":1,"container_exited":2,"container_paused":1,"container_health_healthy":0,"container_health_unhealthy":0,"container_health_undefined":1,"image_total":1,"image_size":7794716}
 ~~~
