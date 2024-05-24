@@ -33,21 +33,23 @@ get_container_states() {
     do
         IFS=":" read -ra container_states <<< "$(sudo docker inspect --format="$format" "${container_ids[${index}]}")"
         case "${container_states[0]//'"'/''}" in
-            "running") ((container_running++))
+            "running") 
+                ((container_running++))
+                case "${container_states[1]//'"'/''}" in
+                    "healthy") ((container_health_healthy++))
+                    ;;
+                    "unhealthy") ((container_health_unhealthy++))
+                    ;;
+                    "null") ((container_health_undefined++))
+                    ;;
+                esac
             ;;
             "exited") ((container_exited++))
             ;;
             "paused") ((container_paused++))
             ;;
         esac
-        case "${container_states[1]//'"'/''}" in
-            "healthy") ((container_health_healthy++))
-            ;;
-            "unhealthy") ((container_health_unhealthy++))
-            ;;
-            "null") ((container_health_undefined++))
-            ;;
-        esac
+        
     done
 }
 

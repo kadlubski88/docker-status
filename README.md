@@ -16,12 +16,12 @@ Version:        Docker version 24.0.5, build 24.0.5-0ubuntu1~22.04.1
 
 Containers
 ----------
-Total:          2
-Running:        0
+Total:          4
+Running:        1
    Healthy:        0
    Unhealthy:      0
-   Undefined:      2
-Exited:         1
+   Undefined:      1
+Exited:         2
 Paused:         1
 
 Images
